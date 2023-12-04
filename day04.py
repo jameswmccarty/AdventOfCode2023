@@ -81,13 +81,9 @@ Both parts of this puzzle are complete! They provide two gold stars: **
 def score(card):
 	num,points = card.split(":")
 	win,have   = points.split("|")
-	win,have  = set(win.strip().split(" ")),set(have.strip().split(" "))
-	win.discard('')
-	have.discard('')
+	win,have  = set(win.strip().split()),set(have.strip().split())
 	overlaps = len(win.intersection(have))
-	if overlaps == 0:
-		return 0
-	return 2**(overlaps-1)
+	return 0 if overlaps == 0 else 2**(overlaps-1)
 
 if __name__ == "__main__":
 
@@ -101,9 +97,7 @@ if __name__ == "__main__":
 		for card in infile:
 			num,points = card.split(":")
 			win,have   = points.split("|")
-			win,have  = set(win.strip().split(" ")),set(have.strip().split(" "))
-			win.discard('')
-			have.discard('')
+			win,have  = set(win.strip().split()),set(have.strip().split())
 			offset = len(win.intersection(have))
 			num = int(num.lstrip("Card "))
 			if num not in won:
