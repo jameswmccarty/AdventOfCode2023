@@ -121,6 +121,10 @@ In the above example, the lowest location number can be obtained from seed numbe
 
 Consider all of the initial seed numbers listed in the ranges on the first line of the almanac. What is the lowest location number that corresponds to any of the initial seed numbers?
 
+Your puzzle answer was 81956384.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 from collections import deque
@@ -136,12 +140,34 @@ class MapRange:
 
 	def add_range(self,line):
 		self.ranges.append(tuple(int(x) for x in line.strip().split()))
+		self.ranges = sorted(self.ranges,key=lambda x:x[1])
 
 	def in_range(self,num):
 		for dest,source,ran in self.ranges:
 			if num >= source and num <= source+ran:
 				return (num-source)+dest
 		return num
+
+	def transform_range(self,start,delta):
+		new_ranges = []
+		pos  = start
+		high_bound = start+delta
+		# interval is low,high,new base
+		intervals = [ (x[1],x[1]+x[2],x[0]) for x in self.ranges ]
+		while intervals and pos < high_bound:
+			base,ceil,new_base = intervals.pop(0)
+			if pos < base:
+				dx = min(base,high_bound)-pos
+				new_ranges.append((pos,dx))
+				pos += dx
+			if pos >= base and pos < ceil:
+				sx = pos - base
+				dx = min(ceil,high_bound)-pos
+				new_ranges.append((sx+new_base,dx))
+				pos += dx
+		if pos < high_bound:
+			new_ranges.append((pos,high_bound-pos+1))
+		return new_ranges
 
 if __name__ == "__main__":
 
@@ -175,4 +201,17 @@ if __name__ == "__main__":
 	print(min_loc)
 
 	# Part 2 Solution
-
+	min_loc = float("inf")
+	q = deque()
+	while seeds:
+		start = seeds.pop(0)
+		delta = seeds.pop(0)
+		q.append(((start,delta),'seed'))
+	while q:
+		value,location = q.popleft()
+		if location == "location":
+			min_loc = min(min_loc,value[0])
+		else:
+			for entry in maps[location].transform_range(value[0],value[1]):
+				q.append((entry,maps[location].goes_to))
+	print(min_loc)
