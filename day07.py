@@ -85,6 +85,10 @@ With the new joker rule, the total winnings in this example are 5905.
 
 Using the new joker rule, find the rank of every hand in your set. What are the new total winnings?
 
+Your puzzle answer was 251135960.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 import functools
@@ -124,10 +128,36 @@ def hand_compare(a,b):
 def hand_compare2(a,b):
 	a,b = a[0],b[0]
 	strength = 'AKQT98765432J'
-	a_counts = [ a.count(x) for x in set(a) ]
-	b_counts = [ b.count(x) for x in set(b) ]
-	max_a = max(a_counts)
-	max_b = max(b_counts)
+	if 'J' in a:
+		best_a_counts = []
+		best_max_a = 0
+		for char in 'AKQT98765432':
+			new_a = a.replace('J',char)
+			a_counts = [ new_a.count(x) for x in set(new_a) ]
+			max_a = max(a_counts)
+			if max_a > best_max_a:
+				best_max_a = max_a
+				best_a_counts = a_counts[:]
+		a_counts = best_a_counts[:]
+		max_a    = best_max_a
+	elif 'J' not in a:
+		a_counts = [ a.count(x) for x in set(a) ]
+		max_a = max(a_counts)
+	if 'J' in b:
+		best_b_counts = []
+		best_max_b = 0
+		for char in 'AKQT98765432':
+			new_b = b.replace('J',char)
+			b_counts = [ new_b.count(x) for x in set(new_b) ]
+			max_b = max(b_counts)
+			if max_b > best_max_b:
+				best_max_b = max_b
+				best_b_counts = b_counts[:]
+		b_counts = best_b_counts[:]
+		max_b    = best_max_b
+	elif 'J' not in b:
+		b_counts = [ b.count(x) for x in set(b) ]
+		max_b = max(b_counts)
 	# 5,4 or 3 of a kind beating a lower type
 	if max_a > max_b and max_a >= 2:
 		return 1
@@ -162,4 +192,5 @@ if __name__ == "__main__":
 	print(sum( (i+1)*int(x[1]) for i,x in enumerate(cards) ))
 
 	# Part 2 Solution
-
+	cards = sorted(cards, key=functools.cmp_to_key(hand_compare2))
+	print(sum( (i+1)*int(x[1]) for i,x in enumerate(cards) ))
