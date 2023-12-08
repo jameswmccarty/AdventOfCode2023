@@ -73,9 +73,14 @@ So, in this example, you end up entirely on nodes that end in Z after 6 steps.
 
 Simultaneously start on every node that ends with A. How many steps does it take before you're only on nodes that end with Z?
 
+Your puzzle answer was 21366921060721.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 from collections import deque
+from math import lcm
 
 nodes = dict()
 path  = ''
@@ -85,7 +90,7 @@ def bfs(start,finish):
 	q.append((start,0))
 	while q:
 		pos,step = q.popleft()
-		if pos == finish:
+		if pos in finish:
 			return step
 		next_idx  = 1 if path[step%len(path)] == 'R' else 0
 		q.append((nodes[pos][next_idx],step+1))
@@ -103,4 +108,7 @@ if __name__ == "__main__":
 	print(bfs('AAA','ZZZ'))
 
 	# Part 2 Solution
-
+	ends     = [ x for x in nodes.keys() if x[-1] == 'Z' ]
+	starts   = [ x for x in nodes.keys() if x[-1] == 'A' ]
+	cycles   = [ bfs(s,ends) for s in starts ]
+	print(lcm(*cycles))
