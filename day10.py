@@ -209,6 +209,10 @@ In this last example, 10 tiles are enclosed by the loop.
 
 Figure out whether you have time to search for the nest by calculating the area within the loop. How many tiles are enclosed by the loop?
 
+Your puzzle answer was 451.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 diagram = dict()
@@ -245,6 +249,37 @@ def bfs(start):
 				q.append((x+dx,y+dy))
 	return count_map
 
+def exclude_border_points_bfs(points_forming_loop):
+	max_y = max(p[1] for p in diagram.keys())+2
+	max_x = max(p[0] for p in diagram.keys())+2
+	q = deque()
+	seen = set()
+	seen.add((-1,-1))
+	q.append((-1,-1))
+	while q:
+		pos = q.popleft()
+		x,y = pos
+		for dx,dy in ((0,1),(0,-1),(1,0),(-1,0),(1,1),(-1,-1),(1,-1),(-1,1)):
+			pt = (x+dx,y+dy)
+			if pt not in seen and pt not in points_forming_loop and pt[0] >= -1 and pt[0] < max_x and pt[1] >= -1 and pt[1] < max_y:
+				seen.add(pt)
+				q.append(pt)
+	return seen
+
+def check_pos(pos):
+	x_row_pipes = { pt for pt in points_forming_loop if pt[1] == pos[1] }
+	x_row_pipes.add(pos)
+	x_row_str = ''.join( diagram[x] for x in sorted(x_row_pipes) )
+	in_loop = False
+	x_row_str = deque(x_row_str)
+	while x_row_str:
+		char = x_row_str.popleft()
+		if char in '|7F':
+			in_loop ^= True
+		if char == '.' and in_loop:
+			return True
+	return False
+
 if __name__ == "__main__":
 
 	# Part 1 Solution
@@ -260,7 +295,6 @@ if __name__ == "__main__":
 
 	max_step = -1
 	best_char = None
-	best_counts = None
 	points_forming_loop = set()
 	for char in '|-LJ7F':
 		diagram[start] = char
@@ -272,6 +306,16 @@ if __name__ == "__main__":
 						max_step = v
 						best_char = char
 						points_forming_loop = { p for p,c in count_map.items() if c <= v }
-						best_counts = count_map.copy()
 	print(max_step)
 
+	# Part 2 Solution
+
+	excludes = exclude_border_points_bfs(points_forming_loop)
+	candidates = set()
+	for y in range(max(p[1] for p in diagram.keys())):
+		for x in range(max(p[0] for p in diagram.keys())):
+			if (x,y) not in points_forming_loop and (x,y) not in excludes:
+				candidates.add((x,y))
+				diagram[(x,y)] = '.'
+
+	print(len({ pt for pt in candidates if check_pos(pt) }))
