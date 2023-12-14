@@ -111,6 +111,10 @@ In the above example, after 1000000000 cycles, the total load on the north suppo
 
 Run the spin cycle for 1000000000 cycles. Afterward, what is the total load on the north support beams?
 
+Your puzzle answer was 98894.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 class Rock:
@@ -173,3 +177,47 @@ if __name__ == "__main__":
 
 	# Part 2 Solution
 
+	fixed_rocks = set()
+	moveable_rocks = set()
+	with open("day14_input", "r") as infile:
+		y = 0
+		for line in infile:
+			x_dim = len(line.strip())
+			for x,c in enumerate(line.strip()):
+				if c == "O":
+					moveable_rocks.add(Rock(x,y))
+				if c == "#":
+					fixed_rocks.add((x,y))
+			y += 1
+
+	for e in moveable_rocks:
+		e.dims(y,x_dim)
+
+	moveable_rock_pos = { r.pos() for r in moveable_rocks }
+	cycles = dict()
+	cycles[frozenset(moveable_rock_pos)] = 0
+	c = 0
+	c_max = 1000000000
+	looped = False
+	while c < c_max:
+
+		while any( r.move("N",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
+			moveable_rock_pos = { r.pos() for r in moveable_rocks }
+		while any( r.move("W",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
+			moveable_rock_pos = { r.pos() for r in moveable_rocks }
+		while any( r.move("S",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
+			moveable_rock_pos = { r.pos() for r in moveable_rocks }
+		while any( r.move("E",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
+			moveable_rock_pos = { r.pos() for r in moveable_rocks }
+		cycle_set = frozenset(moveable_rock_pos)
+		if cycle_set in cycles and not looped:
+			#print(cycles[cycle_set],sum( r.score() for r in moveable_rocks ),c)
+			cycles[cycle_set].append(c)
+			c_max = ( c_max - cycles[cycle_set][0] )  % (cycles[cycle_set][1] - cycles[cycle_set][0])
+			looped = True
+			c = 0
+		else:
+			cycles[cycle_set] = [c]
+		#print(cycle,sum( r.score() for r in moveable_rocks ))
+		c += 1
+print(sum( r.score() for r in moveable_rocks ))
