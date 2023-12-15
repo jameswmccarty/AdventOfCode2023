@@ -143,11 +143,12 @@ class Rock:
 		global moveable_rock_pos
 		dx,dy = self.deltas[d]
 		nx,ny = self.x+dx,self.y+dy
-		if (nx,ny) not in cubes and (nx,ny) not in moveable_rock_pos and nx >= 0 and ny >= 0 and nx < self.x_dim and ny < self.y_dim:
-			moveable_rock_pos.discard((self.x,self.y))
-			moveable_rock_pos.add((nx,ny))
-			self.x = nx
-			self.y = ny
+		if (nx,ny) not in moveable_rock_pos and (nx,ny) not in cubes and nx >= 0 and ny >= 0 and nx < self.x_dim and ny < self.y_dim:
+			while (nx,ny) not in moveable_rock_pos and (nx,ny) not in cubes and nx >= 0 and ny >= 0 and nx < self.x_dim and ny < self.y_dim:
+				moveable_rock_pos.discard((self.x,self.y))
+				moveable_rock_pos.add((nx,ny))
+				self.x,self.y = nx,ny
+				nx,ny = nx+dx,ny+dy
 			return True
 		return False
 
