@@ -117,6 +117,8 @@ Both parts of this puzzle are complete! They provide two gold stars: **
 
 """
 
+moveable_rock_pos = set()
+
 class Rock:
 
 	deltas = { "N" : (0,-1),
@@ -137,10 +139,13 @@ class Rock:
 	def pos(self):
 		return (self.x,self.y)
 
-	def move(self,d,rounds,cubes):
+	def move(self,d,cubes):
+		global moveable_rock_pos
 		dx,dy = self.deltas[d]
 		nx,ny = self.x+dx,self.y+dy
-		if (nx,ny) not in cubes and (nx,ny) not in rounds and nx >= 0 and ny >= 0 and nx < self.x_dim and ny < self.y_dim:
+		if (nx,ny) not in cubes and (nx,ny) not in moveable_rock_pos and nx >= 0 and ny >= 0 and nx < self.x_dim and ny < self.y_dim:
+			moveable_rock_pos.discard((self.x,self.y))
+			moveable_rock_pos.add((nx,ny))
 			self.x = nx
 			self.y = ny
 			return True
@@ -170,8 +175,8 @@ if __name__ == "__main__":
 		e.dims(y,x_dim)
 
 	moveable_rock_pos = { r.pos() for r in moveable_rocks }
-	while any( r.move("N",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
-		moveable_rock_pos = { r.pos() for r in moveable_rocks }
+	while any( r.move("N",fixed_rocks) for r in moveable_rocks ):
+		continue
 
 	print(sum( r.score() for r in moveable_rocks ))
 
@@ -195,21 +200,16 @@ if __name__ == "__main__":
 
 	moveable_rock_pos = { r.pos() for r in moveable_rocks }
 	cycles = dict()
-	cycles[frozenset(moveable_rock_pos)] = 0
+	cycles[hash(frozenset(moveable_rock_pos))] = 0
 	c = 0
 	c_max = 1000000000
 	looped = False
 	while c < c_max:
 
-		while any( r.move("N",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
-			moveable_rock_pos = { r.pos() for r in moveable_rocks }
-		while any( r.move("W",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
-			moveable_rock_pos = { r.pos() for r in moveable_rocks }
-		while any( r.move("S",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
-			moveable_rock_pos = { r.pos() for r in moveable_rocks }
-		while any( r.move("E",moveable_rock_pos,fixed_rocks) for r in moveable_rocks ):
-			moveable_rock_pos = { r.pos() for r in moveable_rocks }
-		cycle_set = frozenset(moveable_rock_pos)
+		for d in "NWSE":
+			while any( r.move(d,fixed_rocks) for r in moveable_rocks ):
+				continue
+		cycle_set = hash(frozenset(moveable_rock_pos))
 		if cycle_set in cycles and not looped:
 			#print(cycles[cycle_set],sum( r.score() for r in moveable_rocks ),c)
 			cycles[cycle_set].append(c)
