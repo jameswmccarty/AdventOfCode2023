@@ -100,6 +100,10 @@ Using this configuration, 51 tiles are energized:
 
 Find the initial beam configuration that energizes the largest number of tiles; how many tiles are energized in that configuration?
 
+Your puzzle answer was 7932.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 from collections import deque
@@ -115,9 +119,8 @@ def show_map(s,x_dim,y_dim):
 				print('.',end='')
 		print()
 
-def beam_walk(x_dim,y_dim):
+def beam_walk(x_dim,y_dim,p,d):
 	seen = set()
-	p,d = (0,0),(1,0)
 	q = deque()
 	seen.add((p,d))
 	q.append((p,d))
@@ -186,8 +189,27 @@ if __name__ == "__main__":
 					layout[(x,y)] = c
 			y += 1
 
-	energized = beam_walk(x_dim,y)
+	energized = beam_walk(x_dim,y,(0,0),(1,0))
 	print(len((energized)))
 
 	# Part 2 Solution
+	most = 0
+	for x in range(x_dim):
+		most = max(most,len(beam_walk(x_dim,y,(x,0),(0,1)))) # top row
+		most = max(most,len(beam_walk(x_dim,y,(x,y-1),(0,-1)))) # bottom row
+	for y in range(y):
+		most = max(most,len(beam_walk(x_dim,y,(0,y),(1,0)))) # left
+		most = max(most,len(beam_walk(x_dim,y,(x_dim-1,y),(-1,0)))) # right
+	# corners
+	#most = max(most,len(beam_walk(x_dim,y,(0,0),(0,1))))
+	most = max(most,len(beam_walk(x_dim,y,(0,0),(1,0))))
+	
+	#most = max(most,len(beam_walk(x_dim,y,(x_dim-1,0),(-1,0))))
+	most = max(most,len(beam_walk(x_dim,y,(x_dim-1,0),(0,1))))
+	
+	#most = max(most,len(beam_walk(x_dim,y,(0,y-1),(1,0))))
+	most = max(most,len(beam_walk(x_dim,y,(0,y-1),(0,-1))))
 
+	#most = max(most,len(beam_walk(x_dim,y,(x_dim-1,y-1),(-1,0))))
+	most = max(most,len(beam_walk(x_dim,y,(x_dim-1,y-1),(0,-1))))
+	print(most)
