@@ -102,13 +102,18 @@ In the example above, this increases the longest hike to 154 steps:
 #####################O#
 Find the longest hike you can take through the surprisingly dry hiking trails listed on your map. How many steps long is the longest hike?
 
+Your puzzle answer was 6542.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 from collections import deque
+import sys
 
-
-
-def max_bfs(start,end,opens,forced):
+longs = dict()
+def max_bfs2(start,end,opens,forced):
+	global longs
 	forcing = { '>' : (1,0),
 		    '<' : (-1,0),
 		    'v' : (0,1),
@@ -122,7 +127,8 @@ def max_bfs(start,end,opens,forced):
 		pos,seen,steps = q.popleft()
 		if pos == end:
 			most_steps = max(most_steps,steps)
-		else:
+		elif steps >= longs[pos]:
+			longs[pos] = steps
 			if pos in forced:
 				x,y = pos	
 				dx,dy = forcing[forced[pos]]
@@ -134,10 +140,50 @@ def max_bfs(start,end,opens,forced):
 					nx,ny = x+dx,y+dy
 					if (nx,ny) not in seen and ((nx,ny) in opens or (nx,ny) in forced):
 						q.append(((nx,ny),{*seen,(nx,ny)},steps+1))
-	return most_steps	
+	return most_steps
+
+most_steps = 0
+def max_dfs2(pos,graph,seen,steps):
+	global most_steps
+	if pos.end:
+		most_steps = max(most_steps,steps)
+		#print(most_steps)
+	else:
+		for entry in pos.connections:
+			if entry not in seen:
+				max_dfs2(entry,graph,{*seen,entry},steps+pos.weight)
+
+class Node:
+	
+	def __init__(self):
+		self.weight = 1
+		self.connections = set()
+		self.end = False
+		self.start = False
+	
+	def connect(self,a):
+		self.connections.add(a)
+	
+	def remove(self,a):
+		self.connections.discard(a)
+	
+	def compress(self):
+		if len(self.connections) == 2 and not self.end and not self.start:
+			t_conn = list(self.connections)
+			if len(t_conn[0].connections) == 2 and len(t_conn[1].connections) == 2:
+				if not t_conn[0].end and not t_conn[1].end and not t_conn[0].start and not t_conn[1].start: 
+					left  = self.connections.pop()
+					right =	self.connections.pop()
+					left.remove(self)
+					right.remove(self)
+					left.connect(right)
+					right.connect(left)
+					right.weight += self.weight
+					return True
+		return False
 
 if __name__ == "__main__":
-
+	sys.setrecursionlimit(6000)
 	start = None
 	end   = None
 	forcing = dict()
@@ -155,7 +201,37 @@ if __name__ == "__main__":
 	
 	start = [ (x,y) for x,y in opens if y == 0 ][0]
 	end =   [ (i,j) for i,j in opens if j == (y-1) ][0]
-	print(max_bfs(start,end,opens,forcing))
+	for pt in opens:
+		longs[pt] = 0
+	for pt in forcing.keys():
+		longs[pt] = 0
+	print(max_bfs2(start,end,opens,forcing))
 
 	# Part 2 Solution
+	
+	nodes = dict()
+	for pt in forcing.keys():
+		opens.add(pt)
+	for pt in opens:
+		nodes[pt] = Node()
+	for pt in opens:
+		x,y = pt
+		for dx,dy in ((0,1),(0,-1),(1,0),(-1,0)):
+			nx,ny = x+dx,y+dy
+			if (nx,ny) in opens:
+				nodes[pt].connect(nodes[(nx,ny)])
+				nodes[(nx,ny)].connect(nodes[pt])
+		
+	nodes[end].end = True
+	nodes[start].start = True	
+	new_start = nodes[start]
+		
+	graph = [ x for x in nodes.values() ]
+	while any( x.compress() for x in graph ):
+		continue;
+		
+	graph = [ x for x in graph if len(x.connections) > 0]
+	max_dfs2(new_start,graph,{new_start},0)
+	print(most_steps)
+
 
