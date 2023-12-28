@@ -172,7 +172,7 @@ class Brick:
 		return min( t[2] for t in self.volume )
 
 	# move the brick as low as possible by looking at any bricks below this one
-	def drop2(self,other_bricks):
+	def drop(self,other_bricks):
 		if 1 in { t[2] for t in self.volume }:
 			return False
 		other_bricks = [ b for b in other_bricks if b != self ]
@@ -193,10 +193,21 @@ class Brick:
 				return moved
 		return moved
 
-	# move the brick as low as possible by looking at any bricks below this one
-	def bump(self,other_bricks):
+	# determine if it is possible to move a block down by 1 square
+	def bump(self,global_volume):
 		if 1 in { t[2] for t in self.volume }:
 			return False
+		for e in self.volume:
+			global_volume.discard(e)
+		new_volume = { (x,y,z-1) for x,y,z in self.volume }
+		if len(new_volume.intersection(global_volume)) == 0:
+			return True
+		return False
+
+	# move the brick down one square if possible
+	def bump2(self,other_bricks):
+		if 1 in { t[2] for t in self.volume }:
+			return
 		other_bricks = [ b for b in other_bricks if b != self ]
 		footy = self.footprint()
 		other_bricks = [ b for b in other_bricks if len(footy.intersection(b.footprint())) > 0 ]
@@ -206,19 +217,8 @@ class Brick:
 				collision_volume.add(e)
 		new_volume = { (x,y,z-1) for x,y,z in self.volume }
 		if len(new_volume.intersection(collision_volume)) == 0:
-			return True
-		return False
-
-	# move the brick as low as possible by looking at any bricks below this one
-	def bump2(self,global_volume):
-		if 1 in { t[2] for t in self.volume }:
-			return False
-		for e in self.volume:
-			global_volume.discard(e)
-		new_volume = { (x,y,z-1) for x,y,z in self.volume }
-		if len(new_volume.intersection(global_volume)) == 0:
-			return True
-		return False
+			self.fell = True
+			self.volume = new_volume
 
 if __name__ == "__main__":
 
@@ -230,9 +230,9 @@ if __name__ == "__main__":
 			bricks.append(b)
 
 	# compress stack
-	for i in range(1,max( b.ceiling() for b in bricks )):
+	for i in range(1,max( b.ceiling() for b in bricks)):
 		chunk = [ b for b in bricks if i in { t[2] for t in b.volume } ]
-		while any( b.drop2(bricks) for b in chunk ):
+		while any( b.drop(bricks) for b in chunk ):
 			continue
 
 	global_volume = set()
@@ -241,28 +241,30 @@ if __name__ == "__main__":
 			global_volume.add(e)
 
 	brick_count = 0
+	excludes = set()
 	for i in range(len(bricks)):
 		current_volume = { x for x in global_volume }
 		trial_stack = [ copy.copy(b) for b in bricks ]
 		removed = trial_stack.pop(i)
 		for e in removed.volume:
 			current_volume.discard(e)
-		if not any( b.bump2(copy.copy(current_volume)) for b in trial_stack ):
+		if not any( b.bump(copy.copy(current_volume)) for b in trial_stack ):
 			brick_count += 1
+			excludes.add(i)
 	print(brick_count)
 
 	# Part 2 Solution
 
 	brick_count = 0
 	for j in range(len(bricks)):
-		trial_stack = [ copy.copy(b) for b in bricks ]
-		for b in trial_stack:
-			b.fell = False
-		removed = trial_stack.pop(j)
-		# compress stack
-		for i in range(1,max( b.ceiling() for b in trial_stack )):
-			chunk = [ b for b in trial_stack if i in { t[2] for t in b.volume } ]
-			while any( b.drop2(trial_stack) for b in chunk ):
-				continue
-		brick_count += sum( 1 if b.fell else 0 for b in trial_stack )
+		if j not in excludes:
+			trial_stack = [ copy.copy(b) for b in bricks ]
+			for b in trial_stack:
+				b.fell = False
+			removed = trial_stack.pop(j)
+			# compress stack, but only by 1 movement per brick
+			for i in range(1,max( b.ceiling() for b in trial_stack )):
+				chunk = [ b for b in trial_stack if i in { t[2] for t in b.volume } and not b.fell ]
+				[ b.bump2(trial_stack) for b in chunk ]
+			brick_count += sum( b.fell for b in trial_stack )
 	print(brick_count)
