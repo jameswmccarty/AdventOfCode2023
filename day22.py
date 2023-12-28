@@ -132,6 +132,10 @@ Disintegrating any other brick would cause no other bricks to fall. So, in this 
 
 For each brick, determine how many other bricks would fall if that brick were disintegrated. What is the sum of the number of other bricks that would fall?
 
+Your puzzle answer was 101541.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
 
 import copy
@@ -140,6 +144,7 @@ class Brick:
 	
 	def __init__(self, init_string=None):
 		self.volume = set()
+		self.fell  = False
 		if init_string == None:
 			return
 		a,b = init_string.split('~')
@@ -182,6 +187,7 @@ class Brick:
 			new_volume = { (x,y,z-1) for x,y,z in self.volume }
 			if len(new_volume.intersection(collision_volume)) == 0:
 				moved = True
+				self.fell = True
 				self.volume = new_volume
 			else:
 				return moved
@@ -247,3 +253,16 @@ if __name__ == "__main__":
 
 	# Part 2 Solution
 
+	brick_count = 0
+	for j in range(len(bricks)):
+		trial_stack = [ copy.copy(b) for b in bricks ]
+		for b in trial_stack:
+			b.fell = False
+		removed = trial_stack.pop(j)
+		# compress stack
+		for i in range(1,max( b.ceiling() for b in trial_stack )):
+			chunk = [ b for b in trial_stack if i in { t[2] for t in b.volume } ]
+			while any( b.drop2(trial_stack) for b in chunk ):
+				continue
+		brick_count += sum( 1 if b.fell else 0 for b in trial_stack )
+	print(brick_count)
