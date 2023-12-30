@@ -209,14 +209,8 @@ class Brick:
 		if 1 in { t[2] for t in self.volume }:
 			return
 		other_bricks = [ b for b in other_bricks if b != self ]
-		footy = self.footprint()
-		other_bricks = [ b for b in other_bricks if len(footy.intersection(b.footprint())) > 0 ]
-		collision_volume = set()
-		for b in other_bricks:
-			for e in b.volume:
-				collision_volume.add(e)
 		new_volume = { (x,y,z-1) for x,y,z in self.volume }
-		if len(new_volume.intersection(collision_volume)) == 0:
+		if all( len(new_volume.intersection(b.volume)) == 0 for b in other_bricks):
 			self.fell = True
 			self.volume = new_volume
 
