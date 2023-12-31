@@ -108,7 +108,13 @@ So, at time 0, the rock needs to be at X position 24, Y position 13, and Z posit
 
 Determine the exact position and velocity the rock needs to have at time 0 so that it perfectly collides with every hailstone. What do you get if you add up the X, Y, and Z coordinates of that initial position?
 
+Your puzzle answer was 652666650475950.
+
+Both parts of this puzzle are complete! They provide two gold stars: **
+
 """
+
+from z3 import *
 
 class Hailstone:
 
@@ -173,5 +179,26 @@ if __name__ == "__main__":
 
 
 	# Part 2 Solution
+	x,y,z,dx,dy,dz,t1,t2,t3,t4 = Reals('x y z dx dy dz t1 t2 t3 t4')
+	s = Solver()
+	
+	s.add(x>0)
+	s.add(y>0)
+	s.add(z>0)
+	
+	ts = [t1,t2,t3]
+	for i in range(len(ts)):
+		s.add(x+(dx*ts[i]) == stones[i].x+ts[i]*stones[i].dx)
+		s.add(y+(dy*ts[i]) == stones[i].y+ts[i]*stones[i].dy)
+		s.add(z+(dz*ts[i]) == stones[i].z+ts[i]*stones[i].dz)
+
+	# Check for satisfiability
+	if s.check() == sat:
+	    model = s.model()
+	    print(sum([model[x].as_long(),model[y].as_long(),model[z].as_long()]))
+	else:
+	    print('No solution found.')
+	
+	
 
 
